@@ -272,25 +272,13 @@ function check(i){
     mark.textContent = "❌";
     
     if (card.err[i] === 1) {
+      // Первая ошибка: просто ошибка, ничего не пишем
       corr.textContent = "";
       input.select();
     } else if (card.err[i] >= 2) {
-      setTimeout(() => {
-        if (!card.solved[i]) {
-          card.solved[i] = true;
-          input.value = ans.display;
-          input.className = "revealed"; 
-          input.readOnly = true;
-          mark.textContent = "👁";
-          corr.textContent = "";
-          
-          const btn = document.querySelector(`#rows button.check[data-i="${i}"]`);
-          if (btn) btn.classList.add("hidden");
-          
-          if (card.solved.every(Boolean)) finishForms();
-          else focusNext(i);
-        }
-      }, 800);
+      // Вторая ошибка: показываем ответ, просим напечатать
+      corr.innerHTML = (almost ? L("corrAlmost") : L("corrRetype")).replace("{a}", ans.display);
+      input.select();
     }
   }
 }
@@ -437,6 +425,12 @@ function renderSettings(){
   Object.entries(TENSES).forEach(([id, t]) => {
     const label = document.createElement("label");
     label.className = "chip";
+    
+    // Добавляем класс для раскраски
+    if (id === "S" || id === "SP" || id === "T") label.classList.add("subj");
+    if (id === "C" || id === "CP") label.classList.add("cond");
+    if (id === "Y") label.classList.add("imp");
+    
     const cb = document.createElement("input");
     cb.type = "checkbox"; 
     cb.value = id;
