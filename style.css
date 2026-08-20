@@ -66,9 +66,25 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 8px
   border-radius:14px;font-size:11.5px;color:var(--muted);line-height:1.6}
 .share-ico{display:inline-block;border:1px solid var(--muted);border-radius:4px;padding:0 4px;font-size:10px}
 
-.install-box{margin-top:18px;padding:12px 14px;background:var(--card);border:2px dashed var(--tiffany);
-  border-radius:14px;font-size:11.5px;color:var(--text);line-height:1.8;cursor:pointer;transition:all .2s}
+.install-wrapper{margin-top:0}
+.install-box{
+  display:block;
+  width:100%;padding:13px 16px;font-size:13px;font-weight:600;
+  border:2px dashed var(--tiffany);border-radius:16px;cursor:pointer;
+  background:var(--card);color:var(--text);font-family:inherit;
+  text-align:center;transition:all .2s;
+}
 .install-box:active{transform:scale(.99);background:var(--tiffany-soft)}
+.install-content{
+  max-height:0;overflow:hidden;transition:max-height .3s ease;
+  font-size:11.5px;color:var(--muted);line-height:1.9;
+  opacity:0;
+}
+.install-content.show{
+  max-height:250px;margin-top:10px;padding:12px 14px;
+  background:var(--card);border:2px solid var(--tiffany-soft);border-radius:14px;
+  opacity:1;
+}
 
 .card{position:relative;background:var(--card);border-radius:22px;padding:22px 18px;border:2px solid var(--pink-soft)}
 .translation{text-align:center;color:var(--muted);font-size:13px;font-weight:500}
@@ -89,9 +105,9 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 8px
 .row input.almost{border-color:var(--warn);background:var(--warn-soft)}
 .row input.revealed{border-color:var(--reveal);background:var(--reveal-soft);color:var(--reveal);font-weight:500}
 .row .mark{width:24px;text-align:center;font-size:15px;flex-shrink:0}
-.row .check{border:2px solid var(--tiffany);background:var(--card);color:var(--tiffany-dark);font-size:16px;cursor:pointer;padding:8px 10px;border-radius:10px;font-family:inherit;font-weight:700}
+.row .check{border:2px solid var(--tiffany);background:var(--card);color:var(--tiffany-dark);font-size:16px;cursor:pointer;padding:8px 10px;border-radius:10px;font-family:inherit;font-weight:700;transition:all .15s}
 .row .check:active{transform:scale(.92);background:var(--tiffany);color:#fff}
-.row .check.hidden{opacity:0;pointer-events:none;width:0;padding:0;border:none}
+.row .check.hidden{display:none}
 .row .reveal{border:none;background:none;font-size:15px;cursor:pointer;padding:4px;opacity:.5;flex-shrink:0}
 .row .reveal:hover{opacity:1}
 .correction{margin:0 0 2px 96px;font-size:11.5px;color:var(--bad)}
