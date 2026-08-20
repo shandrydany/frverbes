@@ -59,21 +59,13 @@
 
   <button id="btn-start" class="primary">Тренировать глаголы! 🚀</button>
 
-  <div class="collapsible-wrapper">
-    <button id="btn-install-toggle" class="collapsible-btn">📱 Установить как приложение...</button>
-    <div id="install-content" class="collapsible-content" hidden>
-      <div class="hint">
-        <b>🍎 На iPhone:</b><br>
-        Открыть в Safari → Поделиться → «На экран "Домой"» → Добавить
-        <br><br>
-        <b>🤖 На Android:</b><br>
-        Открыть в Chrome → меню ⋮ → «Установить приложение» или дождитесь предложения
-        <br><br>
-        <b>💻 На компьютер:</b><br>
-        Chrome/Edge: меню ⋮ → «Установить "Учим французские глаголы"»<br>
-        Safari: Поделиться → «Добавить на главный экран»
-      </div>
-    </div>
+  <div class="install-box">
+    <b>📱 Установить как приложение</b><br>
+    <span style="font-size:11px;color:var(--muted)">
+      <b>iPhone:</b> Safari → Поделиться → «На экран "Домой"»<br>
+      <b>Android:</b> Chrome → меню ⋮ → «Установить приложение»<br>
+      <b>Компьютер:</b> Chrome/Edge меню ⋮ → Установить
+    </span>
   </div>
 
   <div class="version">Conjugueur v2.4 · 581 глагол · 14 времён</div>
@@ -81,6 +73,11 @@
 
 <!-- ======== TRAINING ======== -->
 <section id="screen-train" class="screen" hidden>
+  <div style="display:flex;gap:8px;margin-bottom:16px;">
+    <button id="btn-back" class="icon-btn" title="Вернуться">←</button>
+    <div style="flex:1;text-align:center;padding-top:6px;font-weight:600;color:var(--muted);font-size:13px;" id="progress-text"></div>
+  </div>
+
   <div class="card" id="card">
     <div class="translation" id="card-ru"></div>
     <div class="prep" id="card-prep"></div>
