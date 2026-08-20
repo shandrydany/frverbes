@@ -1,4 +1,4 @@
-/* Conjugueur v2.4 — тренажёр французских спряжений */
+/* Conjugueur v2.3 — тренажёр французских спряжений */
 "use strict";
 
 /* ---------- Времена ---------- */
@@ -59,62 +59,36 @@ const $ = id => document.getElementById(id);
 /* ---------- Переводы интерфейса ---------- */
 const I18N = {
   ru: {
-    h1: "Что учим сегодня? 💪",
-    tenses: "⏰ Времена", 
-    verbs: "📚 Глаголы", 
-    lang: "🌍 Язык перевода", 
-    accents: "´ Акценты (é, è, ç…)",
-    top50: "Топ-50", 
-    top100: "Топ-100", 
-    top300: "Топ-300", 
-    all: "Все 581 🤯",
-    strict: "Строго 😤", 
-    lenient: "Мягко 😌",
-    bonus: "💬 Бонус", 
-    bonusOpt: "Перевести предложение (+25 ⚡)",
-    start: "Тренировать глаголы! 🚀", 
-    skip: "Пропустить ⏭", 
-    next: "Дальше →",
-    phraseLabel: "💬 Бонусное задание! Переведи на французский:",
+    h1: "Что тренируем?",
+    tenses: "Времена", verbs: "Глаголы", lang: "Язык перевода", accents: "Акценты (é, è, ç…)",
+    top50: "Топ-50", top100: "Топ-100", top300: "Топ-300", all: "Все 581",
+    strict: "Строго", lenient: "Мягко — можно без акцентов",
+    bonus: "Бонус-фраза", bonusOpt: "После спряжения — перевести фразу на французский (+25 ⚡)",
+    start: "Начать тренировку", skip: "Пропустить", next: "Дальше →",
+    phraseLabel: "Бонус-фраза — переведи на французский:",
     reveal: "Показать ответ (без очков)",
-    streak: "Серия карточек без ошибок", 
-    xp: "Опыт и уровень", 
-    settings: "Настройки",
+    streak: "Серия карточек без ошибок", xp: "Опыт и уровень", settings: "Настройки",
     corrRetype: "правильно: <b>{a}</b> — перепечатай",
     corrAlmost: "почти! проверь акценты: <b>{a}</b>",
-    corrPartial: "подсказка: <b>{root}</b>...",
     noVerbs: "Для выбранных времён нет подходящих глаголов — измени настройки.",
-    vVerbs: "глагол", 
-    vTenses: "времён",
+    iosHint: "Установи как приложение: <b>Поделиться</b> <span class=\"share-ico\">⎋</span> → <b>«На экран “Домой”»</b>",
+    vVerbs: "глагол", vTenses: "времён",
   },
   en: {
-    h1: "What shall we train today? 💪",
-    tenses: "⏰ Tenses", 
-    verbs: "📚 Verbs", 
-    lang: "🌍 Translation language", 
-    accents: "´ Accents (é, è, ç…)",
-    top50: "Top 50", 
-    top100: "Top 100", 
-    top300: "Top 300", 
-    all: "All 581 🤯",
-    strict: "Strict 😤", 
-    lenient: "Lenient 😌",
-    bonus: "💬 Bonus", 
-    bonusOpt: "Translate a phrase into French (+25 ⚡)",
-    start: "Start training! 🚀", 
-    skip: "Skip ⏭", 
-    next: "Next →",
-    phraseLabel: "💬 Bonus task! Translate into French:",
+    h1: "What shall we train?",
+    tenses: "Tenses", verbs: "Verbs", lang: "Translation language", accents: "Accents (é, è, ç…)",
+    top50: "Top 50", top100: "Top 100", top300: "Top 300", all: "All 581",
+    strict: "Strict", lenient: "Lenient — accents optional",
+    bonus: "Bonus phrase", bonusOpt: "After conjugating — translate a phrase into French (+25 ⚡)",
+    start: "Start training", skip: "Skip", next: "Next →",
+    phraseLabel: "Bonus phrase — translate into French:",
     reveal: "Show answer (no points)",
-    streak: "Streak of flawless cards", 
-    xp: "XP and level", 
-    settings: "Settings",
+    streak: "Streak of flawless cards", xp: "XP and level", settings: "Settings",
     corrRetype: "correct: <b>{a}</b> — retype it",
     corrAlmost: "almost! check the accents: <b>{a}</b>",
-    corrPartial: "hint: <b>{root}</b>...",
     noVerbs: "No verbs match the selected tenses — change the settings.",
-    vVerbs: "verbs", 
-    vTenses: "tenses",
+    iosHint: "Install as an app: <b>Share</b> <span class=\"share-ico\">⎋</span> → <b>“Add to Home Screen”</b>",
+    vVerbs: "verbs", vTenses: "tenses",
   },
 };
 function L(key){ return (I18N[settings.lang] || I18N.ru)[key] || I18N.ru[key] || key; }
@@ -151,7 +125,7 @@ function buildAnswers(verb, tenseId){
   if (t.kind === "s") return verb.t[tenseId].map(f => ({ display: f, accepted: [norm(f)] }));
   if (t.kind === "imp") return verb.t.Y.map(f => ({ display: f, accepted: [norm(f)] }));
   const auxForms = AUX[verb.aux][t.aux];
-  const pp = verb.pp;
+  const pp = verb.pp; // [m.sg, m.pl, f.sg, f.pl]
   const agree = verb.aux === "être"
     ? [ [0,2], [0,2], [0,2], [1,3], [0,1,2,3], [1,3] ]
     : [ [0],[0],[0],[0],[0],[0] ];
@@ -191,7 +165,7 @@ function newCard(){
   const answers = buildAnswers(verb, tenseId);
   card = { verb, tenseId, answers,
            solved: answers.map(() => false),
-           err: answers.map(() => 0),
+           err: answers.map(() => false),
            hadError: false, phraseDone: false };
   renderCard();
 }
@@ -200,13 +174,7 @@ function newCard(){
 function renderCard(){
   const v = card.verb;
   $("card-ru").textContent = settings.lang === "en" ? v.en : v.ru;
-  
-  if (v.prep) {
-    $("card-prep").innerHTML = `<b>Предлоги:</b> ${v.prep}`;
-  } else {
-    $("card-prep").textContent = "";
-  }
-  
+  $("card-prep").textContent = v.prep ? v.inf + " " + v.prep : "";
   $("card-inf").textContent = v.inf;
   $("card-tense").textContent = TENSES[card.tenseId].label;
   $("btn-next").disabled = true;
@@ -229,31 +197,16 @@ function renderCard(){
     input.dataset.i = i;
     input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); check(i); } });
     input.addEventListener("focus", () => { activeInput = input; });
-    
-    const btnCheck = document.createElement("button");
-    btnCheck.className = "check"; 
-    btnCheck.type = "button"; 
-    btnCheck.textContent = "✓";
-    btnCheck.title = "Проверить";
-    btnCheck.addEventListener("click", () => check(i));
-    
     const btnReveal = document.createElement("button");
-    btnReveal.className = "reveal"; 
-    btnReveal.type = "button"; 
-    btnReveal.textContent = "💡";
+    btnReveal.className = "reveal"; btnReveal.type = "button"; btnReveal.textContent = "💡";
     btnReveal.title = L("reveal");
     btnReveal.addEventListener("click", () => reveal(i));
-    
     const mark = document.createElement("div");
-    mark.className = "mark"; 
-    mark.id = "mark-" + i;
-    
-    row.append(pron, input, btnCheck, btnReveal, mark);
+    mark.className = "mark"; mark.id = "mark-" + i;
+    row.append(pron, input, btnReveal, mark);
     rows.appendChild(row);
-    
     const corr = document.createElement("div");
-    corr.className = "correction"; 
-    corr.id = "corr-" + i;
+    corr.className = "correction"; corr.id = "corr-" + i;
     rows.appendChild(corr);
   });
   const first = rows.querySelector("input");
@@ -269,3 +222,283 @@ function check(i){
   const mark = $("mark-" + i), corr = $("corr-" + i);
 
   let ok = ans.accepted.includes(val);
+  let almost = false;
+  if (!ok && val) {
+    const na = stripAccents(val);
+    if (ans.accepted.some(a => stripAccents(a) === na)) {
+      if (settings.accents === "lenient") ok = true;
+      else almost = true;
+    }
+  }
+
+  input.classList.remove("ok","bad","almost","shake");
+  if (ok) {
+    card.solved[i] = true;
+    if (!ans.accepted.includes(val)) input.value = ans.display;
+    input.classList.add("ok");
+    input.readOnly = true;
+    mark.textContent = "✅"; mark.classList.add("pulse");
+    corr.textContent = "";
+    addXP(card.err[i] ? 3 : 10, input);
+    if (card.solved.every(Boolean)) finishForms();
+    else focusNext(i);
+  } else {
+    card.hadError = true; card.err[i] = true;
+    void input.offsetWidth;
+    input.classList.add(almost ? "almost" : "bad", "shake");
+    mark.textContent = "❌";
+    corr.innerHTML = (almost ? L("corrAlmost") : L("corrRetype")).replace("{a}", ans.display);
+    input.select();
+  }
+}
+
+function reveal(i){
+  if (card.solved[i]) return;
+  const input = document.querySelector(`#rows input[data-i="${i}"]`);
+  card.hadError = true; card.err[i] = true;
+  card.solved[i] = true;
+  input.value = card.answers[i].display;
+  input.className = "revealed"; input.readOnly = true;
+  $("mark-" + i).textContent = "👁";
+  $("corr-" + i).textContent = "";
+  if (card.solved.every(Boolean)) finishForms();
+  else focusNext(i);
+}
+
+function focusNext(i){
+  const n = card.answers.length;
+  for (let k = 1; k <= n; k++) {
+    const j = (i + k) % n;
+    if (!card.solved[j]) {
+      document.querySelector(`#rows input[data-i="${j}"]`).focus();
+      return;
+    }
+  }
+}
+
+/* ---------- Бонус-фраза ---------- */
+function finishForms(){
+  const v = card.verb;
+  if (settings.phrases && v.phr) {
+    $("phrase-block").hidden = false;
+    $("phrase-src").textContent = "«" + (settings.lang === "en" ? v.phr[2] : v.phr[1]) + "»";
+    $("phrase-input").focus();
+  } else {
+    finishCard();
+  }
+}
+
+function checkPhrase(){
+  const input = $("phrase-input");
+  if (input.readOnly) return;
+  const target = card.verb.phr[0];
+  const val = normPhrase(input.value);
+  let ok = val === normPhrase(target);
+  if (!ok && settings.accents === "lenient" && val && stripAccents(val) === stripAccents(normPhrase(target))) ok = true;
+  input.classList.remove("ok","bad","shake");
+  if (ok) {
+    input.value = target;
+    input.classList.add("ok"); input.readOnly = true;
+    $("phrase-mark").textContent = "✅";
+    $("phrase-corr").textContent = "";
+    addXP(25, input);
+    card.phraseDone = true;
+    finishCard();
+  } else {
+    card.hadError = true;
+    void input.offsetWidth;
+    input.classList.add("bad","shake");
+    $("phrase-mark").textContent = "❌";
+    $("phrase-corr").innerHTML = L("corrRetype").replace("{a}", target);
+    input.select();
+  }
+}
+
+function revealPhrase(){
+  const input = $("phrase-input");
+  if (input.readOnly) return;
+  card.hadError = true;
+  input.value = card.verb.phr[0];
+  input.className = "revealed"; input.readOnly = true;
+  $("phrase-mark").textContent = "👁";
+  $("phrase-corr").textContent = "";
+  finishCard();
+}
+
+/* ---------- Завершение карточки ---------- */
+function finishCard(){
+  stats.done += 1;
+  stats.streak = card.hadError ? 0 : stats.streak + 1;
+  save("cj2-stats", stats);
+  renderStats();
+  if (!card.hadError) {
+    confetti(50);
+    praise(PRAISE[Math.floor(Math.random() * PRAISE.length)]);
+  }
+  const btn = $("btn-next");
+  btn.disabled = false;
+  btn.focus();
+}
+
+/* ---------- XP, конфетти, похвала ---------- */
+function addXP(n, nearEl){
+  if (!n) return;
+  const before = Math.floor(stats.xp / XP_PER_LEVEL);
+  stats.xp += n;
+  save("cj2-stats", stats);
+  renderStats();
+  if (nearEl) {
+    const f = document.createElement("div");
+    f.className = "xpfloat"; f.textContent = "+" + n + "⚡";
+    f.style.top = (nearEl.offsetTop - 4) + "px";
+    $("card").appendChild(f);
+    setTimeout(() => f.remove(), 1100);
+  }
+  if (Math.floor(stats.xp / XP_PER_LEVEL) > before) {
+    praise("Niveau " + (Math.floor(stats.xp / XP_PER_LEVEL) + 1) + " !");
+    confetti(80);
+  }
+}
+
+function praise(text){
+  const el = document.createElement("div");
+  el.className = "praise"; el.textContent = text;
+  $("card").appendChild(el);
+  setTimeout(() => el.remove(), 1700);
+}
+
+const CONF_COLORS = ["#f48fb1","#ec6d9a","#0abab5","#7fd8d5","#ffd6e7","#a3ecea"];
+function confetti(n){
+  const box = $("confetti");
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement("span");
+    s.style.left = Math.random() * 100 + "vw";
+    s.style.background = CONF_COLORS[Math.floor(Math.random() * CONF_COLORS.length)];
+    s.style.animationDuration = (1.6 + Math.random() * 1.6) + "s";
+    s.style.animationDelay = (Math.random() * 0.4) + "s";
+    s.style.transform = "rotate(" + Math.random() * 360 + "deg)";
+    box.appendChild(s);
+    setTimeout(() => s.remove(), 3800);
+  }
+}
+
+/* ---------- Настройки ---------- */
+function renderSettings(){
+  const box = $("tense-chips");
+  box.innerHTML = "";
+  Object.entries(TENSES).forEach(([id, t]) => {
+    const label = document.createElement("label");
+    label.className = "chip";
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.value = id;
+    cb.checked = settings.tenses.includes(id);
+    const span = document.createElement("span");
+    span.textContent = t.label;
+    label.append(cb, span);
+    box.appendChild(label);
+  });
+  const set = (name, val) => { const el = document.querySelector(`input[name="${name}"][value="${val}"]`); if (el) el.checked = true; };
+  set("range", settings.range); set("accents", settings.accents); set("lang", settings.lang);
+  $("opt-phrases").checked = !!settings.phrases;
+}
+
+function readSettings(){
+  const tenses = [...document.querySelectorAll("#tense-chips input:checked")].map(cb => cb.value);
+  settings.tenses = tenses.length ? tenses : DEFAULT_TENSES;
+  settings.range = parseInt(document.querySelector('input[name="range"]:checked')?.value || "100", 10);
+  settings.accents = document.querySelector('input[name="accents"]:checked')?.value || "strict";
+  settings.lang = document.querySelector('input[name="lang"]:checked')?.value || "ru";
+  settings.phrases = $("opt-phrases").checked;
+  save("cj2-settings", settings);
+}
+
+/* ---------- Панель акцентов ---------- */
+function renderAccentBar(){
+  const bar = $("accent-bar");
+  ACCENTS.forEach(ch => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = ch;
+    b.addEventListener("mousedown", e => e.preventDefault());
+    b.addEventListener("touchstart", e => { e.preventDefault(); insertChar(ch); }, { passive: false });
+    b.addEventListener("click", () => insertChar(ch));
+    bar.appendChild(b);
+  });
+}
+function insertChar(ch){
+  if (!activeInput || activeInput.readOnly) return;
+  const s = activeInput.selectionStart ?? activeInput.value.length;
+  const e = activeInput.selectionEnd ?? s;
+  activeInput.value = activeInput.value.slice(0, s) + ch + activeInput.value.slice(e);
+  activeInput.focus();
+  activeInput.setSelectionRange(s + 1, s + 1);
+}
+
+/* ---------- Экраны, статы ---------- */
+function showScreen(name){
+  $("screen-settings").hidden = name !== "settings";
+  $("screen-train").hidden = name !== "train";
+  $("accent-bar").style.display = name === "train" ? "flex" : "none";
+}
+function renderStats(){
+  $("stat-streak").textContent = stats.streak;
+  $("stat-xp").textContent = stats.xp;
+  $("stat-lvl").textContent = "Lv" + (Math.floor(stats.xp / XP_PER_LEVEL) + 1);
+}
+
+/* ---------- Автообновление приложения ---------- */
+function setupServiceWorker(){
+  if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.register("sw.js").then(reg => {
+    // проверять обновления при каждом запуске и возврате в приложение
+    reg.update();
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") reg.update();
+    });
+    // новая версия установилась и ждёт — активируем сразу
+    reg.addEventListener("updatefound", () => {
+      const nw = reg.installing;
+      if (!nw) return;
+      nw.addEventListener("statechange", () => {
+        if (nw.state === "installed" && navigator.serviceWorker.controller) {
+          nw.postMessage("SKIP_WAITING");
+        }
+      });
+    });
+  }).catch(() => {});
+  // когда новый SW взял управление — один раз перезагружаем страницу
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloaded) return;
+    reloaded = true;
+    location.reload();
+  });
+}
+
+/* ---------- Инициализация ---------- */
+async function init(){
+  renderStats();
+  renderAccentBar();
+  renderSettings();
+  applyI18n();
+  showScreen("settings");
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  if (isIOS && !standalone) $("ios-hint").hidden = false;
+
+  const res = await fetch("verbs.json");
+  DB = (await res.json()).verbs;
+
+  $("btn-start").addEventListener("click", () => { readSettings(); showScreen("train"); newCard(); });
+  document.querySelectorAll('input[name="lang"]').forEach(r =>
+    r.addEventListener("change", () => { settings.lang = r.value; save("cj2-settings", settings); applyI18n(); }));
+  $("btn-settings").addEventListener("click", () => { renderSettings(); showScreen("settings"); });
+  $("btn-next").addEventListener("click", newCard);
+  $("btn-skip").addEventListener("click", newCard);
+  $("phrase-input").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); checkPhrase(); } });
+  $("phrase-input").addEventListener("focus", e => { activeInput = e.target; });
+  $("phrase-reveal").addEventListener("click", revealPhrase);
+
+  setupServiceWorker();
+}
+init();
