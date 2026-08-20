@@ -121,19 +121,6 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 8px
 
 .version{margin-top:22px;text-align:center;font-size:10.5px;color:var(--muted)}
 
-.collapsible-wrapper{margin-top:18px}
-.collapsible-btn{
-  width:100%;padding:13px 16px;font-size:13px;font-weight:600;border:2px solid var(--pink-soft);
-  border-radius:16px;cursor:pointer;background:var(--card);color:var(--muted);font-family:inherit;
-  text-align:left;transition:all .2s;
-}
-.collapsible-btn:active{transform:scale(.98)}
-.collapsible-btn.active{background:var(--tiffany-soft);border-color:var(--tiffany);color:var(--tiffany-dark);font-weight:700}
-.collapsible-content{
-  max-height:0;overflow:hidden;transition:max-height .3s ease;
-}
-.collapsible-content.show{max-height:300px;margin-top:10px}
-
 .shake{animation:shake .3s}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 .pulse{animation:pulse .4s}
