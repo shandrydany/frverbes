@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Учим французские глаголы</title>
+<meta name="description" content="Тренажёр спряжения: 581 глагол, 14 времён. Работает офлайн.">
+<meta name="theme-color" content="#0abab5">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Учим французские глаголы">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Conjugueur</div>
+  <div class="stats">
+    <span class="pill" title="Серия карточек без ошибок">🔥<b id="stat-streak">0</b></span>
+    <span class="pill" title="Опыт и уровень">⚡<b id="stat-xp">0</b> <i id="stat-lvl">Lv1</i></span>
+    <button id="btn-settings" class="icon-btn" title="Настройки">⚙</button>
+  </div>
+</header>
+
+<!-- ======== SETTINGS ======== -->
+<section id="screen-settings" class="screen">
+  <h1>Что учим сегодня?</h1>
+
+  <h2>Времена</h2>
+  <div class="chips" id="tense-chips"></div>
+
+  <h2>Глаголы</h2>
+  <div class="chips" id="range-chips">
+    <label class="chip"><input type="radio" name="range" value="50"><span>Топ-50</span></label>
+    <label class="chip"><input type="radio" name="range" value="100" checked><span>Топ-100</span></label>
+    <label class="chip"><input type="radio" name="range" value="300"><span>Топ-300</span></label>
+    <label class="chip"><input type="radio" name="range" value="9999"><span>Все 581</span></label>
+  </div>
+
+  <h2>Язык перевода</h2>
+  <div class="chips">
+    <label class="chip"><input type="radio" name="lang" value="ru" checked><span>Русский</span></label>
+    <label class="chip"><input type="radio" name="lang" value="en"><span>English</span></label>
+  </div>
+
+  <h2>Акценты (é, è, ç…)</h2>
+  <div class="chips">
+    <label class="chip"><input type="radio" name="accents" value="strict" checked><span>Строго</span></label>
+    <label class="chip"><input type="radio" name="accents" value="lenient"><span>Мягко</span></label>
+  </div>
+
+  <h2>Бонус</h2>
+  <div class="chips">
+    <label class="chip"><input type="checkbox" id="opt-phrases" checked><span>Перевести предложение (+25 ⚡)</span></label>
+  </div>
+
+  <button id="btn-start" class="primary">Тренировать глаголы</button>
+
+  <div class="version">Conjugueur v2.4 · 581 глагол · 14 времён</div>
+</section>
+
+<!-- ======== TRAINING ======== -->
+<section id="screen-train" class="screen" hidden>
+  <div class="card" id="card">
+    <div class="translation" id="card-ru"></div>
+    <div class="prep" id="card-prep"></div>
+    <div class="infinitive" id="card-inf"></div>
+    <div class="tense-badge" id="card-tense"></div>
+
+    <div class="rows" id="rows"></div>
+
+    <div id="phrase-block" hidden>
+      <div class="phrase-label">Бонусное задание — переведи на французский:</div>
+      <div class="phrase-src" id="phrase-src"></div>
+      <div class="row">
+        <input id="phrase-input" type="text" autocapitalize="none" autocomplete="off" spellcheck="false">
+        <button class="reveal" id="phrase-reveal" title="Показать ответ">💡</button>
+        <div class="mark" id="phrase-mark"></div>
+      </div>
+      <div class="correction" id="phrase-corr"></div>
+    </div>
+
+    <div class="btnrow">
+      <button id="btn-skip" class="ghost">Пропустить</button>
+      <button id="btn-next" class="primary" disabled>Дальше</button>
+    </div>
+  </div>
+  <div class="accent-bar" id="accent-bar"></div>
+</section>
+
+<div id="confetti"></div>
+<script src="app.js"></script>
+</body>
+</html>
