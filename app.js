@@ -205,6 +205,7 @@ function renderCard(){
     btnCheck.type = "button"; 
     btnCheck.textContent = "✓";
     btnCheck.title = "Проверить";
+    btnCheck.dataset.i = i;
     btnCheck.addEventListener("click", () => check(i));
     
     const btnReveal = document.createElement("button");
@@ -257,7 +258,7 @@ function check(i){
     mark.classList.add("pulse");
     corr.textContent = "";
     
-    const btn = document.querySelector(`#rows button[data-i="${i}"]`);
+    const btn = document.querySelector(`#rows button.check[data-i="${i}"]`);
     if (btn) btn.classList.add("hidden");
     
     addXP(card.err[i] ? 3 : 10, input);
@@ -271,19 +272,23 @@ function check(i){
     mark.textContent = "❌";
     
     if (card.err[i] === 1) {
-      corr.innerHTML = (almost ? L("corrAlmost") : L("corrRetype")).replace("{a}", ans.display);
+      corr.textContent = "";
       input.select();
     } else if (card.err[i] >= 2) {
       setTimeout(() => {
         if (!card.solved[i]) {
+          card.solved[i] = true;
           input.value = ans.display;
           input.className = "revealed"; 
           input.readOnly = true;
           mark.textContent = "👁";
           corr.textContent = "";
           
-          const btn = document.querySelector(`#rows button[data-i="${i}"]`);
+          const btn = document.querySelector(`#rows button.check[data-i="${i}"]`);
           if (btn) btn.classList.add("hidden");
+          
+          if (card.solved.every(Boolean)) finishForms();
+          else focusNext(i);
         }
       }, 800);
     }
@@ -301,7 +306,7 @@ function reveal(i){
   $("mark-" + i).textContent = "👁";
   $("corr-" + i).textContent = "";
   
-  const btn = document.querySelector(`#rows button[data-i="${i}"]`);
+  const btn = document.querySelector(`#rows button.check[data-i="${i}"]`);
   if (btn) btn.classList.add("hidden");
   
   if (card.solved.every(Boolean)) finishForms();
@@ -537,6 +542,15 @@ async function init(){
   $("btn-back").addEventListener("click", () => { cardCount = 0; showScreen("settings"); });
   $("btn-next").addEventListener("click", newCard);
   $("btn-skip").addEventListener("click", newCard);
+  
+  const btnInstall = $("btn-install");
+  const installContent = $("install-content");
+  if (btnInstall) {
+    btnInstall.addEventListener("click", () => {
+      installContent.classList.toggle("show");
+    });
+  }
+  
   $("phrase-input").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); checkPhrase(); } });
   $("phrase-input").addEventListener("focus", e => { activeInput = e.target; });
   $("phrase-reveal").addEventListener("click", revealPhrase);
