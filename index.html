@@ -17,47 +17,47 @@
 <body>
 
 <header class="topbar">
-  <div class="brand">🇫🇷 Conjugueur</div>
+  <div class="brand">Conjugueur</div>
   <div class="stats">
     <span class="pill" title="Серия карточек без ошибок">🔥<b id="stat-streak">0</b></span>
     <span class="pill" title="Опыт и уровень">⚡<b id="stat-xp">0</b> <i id="stat-lvl">Lv1</i></span>
-    <button id="btn-settings" class="icon-btn" title="Настройки">⚙</button>
+    <button id="btn-settings" class="icon-btn" title="Настройки">⚙️</button>
   </div>
 </header>
 
 <!-- ======== SETTINGS ======== -->
 <section id="screen-settings" class="screen">
-  <h1>Что учим сегодня?</h1>
+  <h1>Что учим сегодня? 💪</h1>
 
-  <h2>Времена</h2>
+  <h2>⏰ Времена</h2>
   <div class="chips" id="tense-chips"></div>
 
-  <h2>Глаголы</h2>
+  <h2>📚 Глаголы</h2>
   <div class="chips" id="range-chips">
     <label class="chip"><input type="radio" name="range" value="50"><span>Топ-50</span></label>
     <label class="chip"><input type="radio" name="range" value="100" checked><span>Топ-100</span></label>
     <label class="chip"><input type="radio" name="range" value="300"><span>Топ-300</span></label>
-    <label class="chip"><input type="radio" name="range" value="9999"><span>Все 581</span></label>
+    <label class="chip"><input type="radio" name="range" value="9999"><span>Все 581 🤯</span></label>
   </div>
 
-  <h2>Язык перевода</h2>
+  <h2>🌍 Язык перевода</h2>
   <div class="chips">
     <label class="chip"><input type="radio" name="lang" value="ru" checked><span>Русский</span></label>
     <label class="chip"><input type="radio" name="lang" value="en"><span>English</span></label>
   </div>
 
-  <h2>Акценты (é, è, ç…)</h2>
+  <h2>´ Акценты (é, è, ç…)</h2>
   <div class="chips">
-    <label class="chip"><input type="radio" name="accents" value="strict" checked><span>Строго</span></label>
-    <label class="chip"><input type="radio" name="accents" value="lenient"><span>Мягко</span></label>
+    <label class="chip"><input type="radio" name="accents" value="strict" checked><span>Строго 😤</span></label>
+    <label class="chip"><input type="radio" name="accents" value="lenient"><span>Мягко 😌</span></label>
   </div>
 
-  <h2>Бонус</h2>
+  <h2>💬 Бонус</h2>
   <div class="chips">
     <label class="chip"><input type="checkbox" id="opt-phrases" checked><span>Перевести предложение (+25 ⚡)</span></label>
   </div>
 
-  <button id="btn-start" class="primary">Тренировать глаголы</button>
+  <button id="btn-start" class="primary">Тренировать глаголы! 🚀</button>
 
   <div class="version">Conjugueur v2.4 · 581 глагол · 14 времён</div>
 </section>
@@ -73,7 +73,7 @@
     <div class="rows" id="rows"></div>
 
     <div id="phrase-block" hidden>
-      <div class="phrase-label">Бонусное задание — переведи на французский:</div>
+      <div class="phrase-label">💬 Бонусное задание! Переведи на французский:</div>
       <div class="phrase-src" id="phrase-src"></div>
       <div class="row">
         <input id="phrase-input" type="text" autocapitalize="none" autocomplete="off" spellcheck="false">
@@ -84,8 +84,8 @@
     </div>
 
     <div class="btnrow">
-      <button id="btn-skip" class="ghost">Пропустить</button>
-      <button id="btn-next" class="primary" disabled>Дальше</button>
+      <button id="btn-skip" class="ghost">Пропустить ⏭</button>
+      <button id="btn-next" class="primary" disabled>Дальше →</button>
     </div>
   </div>
   <div class="accent-bar" id="accent-bar"></div>
