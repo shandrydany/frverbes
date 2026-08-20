@@ -1,7 +1,5 @@
-/* Conjugueur service worker v2.3
-   Стратегия: network-first для HTML (всегда свежая версия при наличии сети),
-   stale-while-revalidate для остального (мгновенно из кэша + фоновое обновление). */
-const CACHE = "conjugueur-v2.3";
+/* Conjugueur service worker v2.4 */
+const CACHE = "conjugueur-v2.4";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,8 +7,6 @@ const ASSETS = [
   "./app.js",
   "./verbs.json",
   "./manifest.json",
-  "./fonts/unbounded-cyr.woff2",
-  "./fonts/unbounded-lat.woff2",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-180.png",
@@ -38,7 +34,6 @@ self.addEventListener("fetch", e => {
     (e.request.headers.get("accept") || "").includes("text/html");
 
   if (isHTML) {
-    // HTML: сначала сеть (свежая версия), кэш — только офлайн
     e.respondWith(
       fetch(e.request)
         .then(res => {
@@ -51,7 +46,6 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // Статика: из кэша мгновенно + фоновое обновление кэша из сети
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then(cached => {
       const network = fetch(e.request)
