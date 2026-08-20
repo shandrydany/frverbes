@@ -1,4 +1,4 @@
-/* Conjugueur v2 — дофаминовый тренажёр французских спряжений */
+/* Conjugueur v2.4 — тренажёр французских спряжений */
 "use strict";
 
 /* ---------- Времена ---------- */
@@ -47,7 +47,7 @@ const XP_PER_LEVEL = 300;
 /* ---------- Состояние ---------- */
 let DB = [];
 let settings = load("cj2-settings", { tenses: DEFAULT_TENSES, range: 100, accents: "strict", lang: "ru", phrases: true });
-if (!Array.isArray(settings.tenses) || !settings.tenses.every(t => TENSES[t])) settings.tenses = DEFAULT_TENSES;
+if (!Array.isArray(settings.tenses) || !settings.tenses.length || !settings.tenses.every(t => TENSES[t])) settings.tenses = DEFAULT_TENSES;
 let stats = load("cj2-stats", { streak: 0, done: 0, xp: 0 });
 let card = null;
 let activeInput = null;
@@ -55,6 +55,75 @@ let activeInput = null;
 function load(k, def){ try { return Object.assign({}, def, JSON.parse(localStorage.getItem(k)) || {}); } catch(e){ return def; } }
 function save(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
 const $ = id => document.getElementById(id);
+
+/* ---------- Переводы интерфейса ---------- */
+const I18N = {
+  ru: {
+    h1: "Что учим сегодня? 💪",
+    tenses: "⏰ Времена", 
+    verbs: "📚 Глаголы", 
+    lang: "🌍 Язык перевода", 
+    accents: "´ Акценты (é, è, ç…)",
+    top50: "Топ-50", 
+    top100: "Топ-100", 
+    top300: "Топ-300", 
+    all: "Все 581 🤯",
+    strict: "Строго 😤", 
+    lenient: "Мягко 😌",
+    bonus: "💬 Бонус", 
+    bonusOpt: "Перевести предложение (+25 ⚡)",
+    start: "Тренировать глаголы! 🚀", 
+    skip: "Пропустить ⏭", 
+    next: "Дальше →",
+    phraseLabel: "💬 Бонусное задание! Переведи на французский:",
+    reveal: "Показать ответ (без очков)",
+    streak: "Серия карточек без ошибок", 
+    xp: "Опыт и уровень", 
+    settings: "Настройки",
+    corrRetype: "правильно: <b>{a}</b> — перепечатай",
+    corrAlmost: "почти! проверь акценты: <b>{a}</b>",
+    corrPartial: "подсказка: <b>{root}</b>...",
+    noVerbs: "Для выбранных времён нет подходящих глаголов — измени настройки.",
+    vVerbs: "глагол", 
+    vTenses: "времён",
+  },
+  en: {
+    h1: "What shall we train today? 💪",
+    tenses: "⏰ Tenses", 
+    verbs: "📚 Verbs", 
+    lang: "🌍 Translation language", 
+    accents: "´ Accents (é, è, ç…)",
+    top50: "Top 50", 
+    top100: "Top 100", 
+    top300: "Top 300", 
+    all: "All 581 🤯",
+    strict: "Strict 😤", 
+    lenient: "Lenient 😌",
+    bonus: "💬 Bonus", 
+    bonusOpt: "Translate a phrase into French (+25 ⚡)",
+    start: "Start training! 🚀", 
+    skip: "Skip ⏭", 
+    next: "Next →",
+    phraseLabel: "💬 Bonus task! Translate into French:",
+    reveal: "Show answer (no points)",
+    streak: "Streak of flawless cards", 
+    xp: "XP and level", 
+    settings: "Settings",
+    corrRetype: "correct: <b>{a}</b> — retype it",
+    corrAlmost: "almost! check the accents: <b>{a}</b>",
+    corrPartial: "hint: <b>{root}</b>...",
+    noVerbs: "No verbs match the selected tenses — change the settings.",
+    vVerbs: "verbs", 
+    vTenses: "tenses",
+  },
+};
+function L(key){ return (I18N[settings.lang] || I18N.ru)[key] || I18N.ru[key] || key; }
+function applyI18n(){
+  document.documentElement.lang = settings.lang;
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = L(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = L(el.dataset.i18nHtml); });
+  document.querySelectorAll("[data-i18n-title]").forEach(el => { el.title = L(el.dataset.i18nTitle); });
+}
 
 /* ---------- Нормализация ---------- */
 function stripAccents(s){ return s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
@@ -73,7 +142,7 @@ function availableTenses(verb){
     const t = TENSES[id];
     if (t.kind === "s") return !!verb.t[id];
     if (t.kind === "imp") return !!verb.t.Y;
-    return true; // составные: aux из таблицы + pp есть всегда
+    return true;
   });
 }
 
@@ -81,9 +150,8 @@ function buildAnswers(verb, tenseId){
   const t = TENSES[tenseId];
   if (t.kind === "s") return verb.t[tenseId].map(f => ({ display: f, accepted: [norm(f)] }));
   if (t.kind === "imp") return verb.t.Y.map(f => ({ display: f, accepted: [norm(f)] }));
-  // составное: aux + participe passé (с согласованием для être)
   const auxForms = AUX[verb.aux][t.aux];
-  const pp = verb.pp; // [m.sg, m.pl, f.sg, f.pl]
+  const pp = verb.pp;
   const agree = verb.aux === "être"
     ? [ [0,2], [0,2], [0,2], [1,3], [0,1,2,3], [1,3] ]
     : [ [0],[0],[0],[0],[0],[0] ];
@@ -118,12 +186,12 @@ function newCard(){
     av = availableTenses(verb);
     if (av.length) break;
   }
-  if (!av || !av.length) { alert("Для выбранных времён нет подходящих глаголов — измени настройки."); showScreen("settings"); return; }
+  if (!av || !av.length) { alert(L("noVerbs")); showScreen("settings"); return; }
   const tenseId = av[Math.floor(Math.random() * av.length)];
   const answers = buildAnswers(verb, tenseId);
   card = { verb, tenseId, answers,
            solved: answers.map(() => false),
-           err: answers.map(() => false),
+           err: answers.map(() => 0),
            hadError: false, phraseDone: false };
   renderCard();
 }
@@ -132,7 +200,13 @@ function newCard(){
 function renderCard(){
   const v = card.verb;
   $("card-ru").textContent = settings.lang === "en" ? v.en : v.ru;
-  $("card-prep").textContent = v.prep ? "📎 " + v.inf + " " + v.prep : "";
+  
+  if (v.prep) {
+    $("card-prep").innerHTML = `<b>Предлоги:</b> ${v.prep}`;
+  } else {
+    $("card-prep").textContent = "";
+  }
+  
   $("card-inf").textContent = v.inf;
   $("card-tense").textContent = TENSES[card.tenseId].label;
   $("btn-next").disabled = true;
@@ -155,16 +229,31 @@ function renderCard(){
     input.dataset.i = i;
     input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); check(i); } });
     input.addEventListener("focus", () => { activeInput = input; });
+    
+    const btnCheck = document.createElement("button");
+    btnCheck.className = "check"; 
+    btnCheck.type = "button"; 
+    btnCheck.textContent = "✓";
+    btnCheck.title = "Проверить";
+    btnCheck.addEventListener("click", () => check(i));
+    
     const btnReveal = document.createElement("button");
-    btnReveal.className = "reveal"; btnReveal.type = "button"; btnReveal.textContent = "💡";
-    btnReveal.title = "Показать ответ (без очков)";
+    btnReveal.className = "reveal"; 
+    btnReveal.type = "button"; 
+    btnReveal.textContent = "💡";
+    btnReveal.title = L("reveal");
     btnReveal.addEventListener("click", () => reveal(i));
+    
     const mark = document.createElement("div");
-    mark.className = "mark"; mark.id = "mark-" + i;
-    row.append(pron, input, btnReveal, mark);
+    mark.className = "mark"; 
+    mark.id = "mark-" + i;
+    
+    row.append(pron, input, btnCheck, btnReveal, mark);
     rows.appendChild(row);
+    
     const corr = document.createElement("div");
-    corr.className = "correction"; corr.id = "corr-" + i;
+    corr.className = "correction"; 
+    corr.id = "corr-" + i;
     rows.appendChild(corr);
   });
   const first = rows.querySelector("input");
@@ -180,258 +269,3 @@ function check(i){
   const mark = $("mark-" + i), corr = $("corr-" + i);
 
   let ok = ans.accepted.includes(val);
-  let almost = false;
-  if (!ok && val) {
-    const na = stripAccents(val);
-    if (ans.accepted.some(a => stripAccents(a) === na)) {
-      if (settings.accents === "lenient") ok = true;
-      else almost = true;
-    }
-  }
-
-  input.classList.remove("ok","bad","almost","shake");
-  if (ok) {
-    solveField(i, input, mark, corr, card.err[i] ? 3 : 10);
-  } else {
-    card.hadError = true; card.err[i] = true;
-    void input.offsetWidth;
-    input.classList.add(almost ? "almost" : "bad", "shake");
-    mark.textContent = "❌";
-    corr.innerHTML = almost
-      ? "почти! проверь акценты: <b>" + ans.display + "</b>"
-      : "правильно: <b>" + ans.display + "</b> — перепечатай";
-    input.select();
-  }
-}
-
-function solveField(i, input, mark, corr, xpGain){
-  card.solved[i] = true;
-  input.value = card.answers[i].accepted.includes(norm(input.value)) ? input.value.trim() : card.answers[i].display;
-  input.classList.remove("bad","almost");
-  input.classList.add("ok");
-  input.readOnly = true;
-  mark.textContent = "✅"; mark.classList.add("pulse");
-  corr.textContent = "";
-  addXP(xpGain, input);
-  if (card.solved.every(Boolean)) finishForms();
-  else focusNext(i);
-}
-
-function reveal(i){
-  if (card.solved[i]) return;
-  const input = document.querySelector(`#rows input[data-i="${i}"]`);
-  card.hadError = true; card.err[i] = true;
-  card.solved[i] = true;
-  input.value = card.answers[i].display;
-  input.className = "revealed"; input.readOnly = true;
-  $("mark-" + i).textContent = "👁";
-  $("corr-" + i).textContent = "";
-  if (card.solved.every(Boolean)) finishForms();
-  else focusNext(i);
-}
-
-function focusNext(i){
-  const n = card.answers.length;
-  for (let k = 1; k <= n; k++) {
-    const j = (i + k) % n;
-    if (!card.solved[j]) {
-      document.querySelector(`#rows input[data-i="${j}"]`).focus();
-      return;
-    }
-  }
-}
-
-/* ---------- Фраза-челлендж ---------- */
-function finishForms(){
-  const v = card.verb;
-  if (settings.phrases && v.phr) {
-    $("phrase-block").hidden = false;
-    $("phrase-src").textContent = "«" + (settings.lang === "en" ? v.phr[2] : v.phr[1]) + "»";
-    $("phrase-input").focus();
-  } else {
-    finishCard();
-  }
-}
-
-function checkPhrase(){
-  const input = $("phrase-input");
-  if (input.readOnly) return;
-  const target = card.verb.phr[0];
-  const val = normPhrase(input.value);
-  let ok = val === normPhrase(target);
-  if (!ok && settings.accents === "lenient" && val && stripAccents(val) === stripAccents(normPhrase(target))) ok = true;
-  input.classList.remove("ok","bad","shake");
-  if (ok) {
-    input.value = target;
-    input.classList.add("ok"); input.readOnly = true;
-    $("phrase-mark").textContent = "✅";
-    $("phrase-corr").textContent = "";
-    addXP(25, input);
-    card.phraseDone = true;
-    finishCard();
-  } else {
-    card.hadError = true;
-    void input.offsetWidth;
-    input.classList.add("bad","shake");
-    $("phrase-mark").textContent = "❌";
-    $("phrase-corr").innerHTML = "правильно: <b>" + target + "</b> — перепечатай";
-    input.select();
-  }
-}
-
-function revealPhrase(){
-  const input = $("phrase-input");
-  if (input.readOnly) return;
-  card.hadError = true;
-  input.value = card.verb.phr[0];
-  input.className = "revealed"; input.readOnly = true;
-  $("phrase-mark").textContent = "👁";
-  $("phrase-corr").textContent = "";
-  finishCard();
-}
-
-/* ---------- Завершение карточки ---------- */
-function finishCard(){
-  stats.done += 1;
-  stats.streak = card.hadError ? 0 : stats.streak + 1;
-  save("cj2-stats", stats);
-  renderStats();
-  if (!card.hadError) {
-    confetti(50);
-    praise(PRAISE[Math.floor(Math.random() * PRAISE.length)]);
-  }
-  const btn = $("btn-next");
-  btn.disabled = false;
-  btn.focus();
-}
-
-/* ---------- XP, конфетти, похвала ---------- */
-function addXP(n, nearEl){
-  if (!n) return;
-  const before = Math.floor(stats.xp / XP_PER_LEVEL);
-  stats.xp += n;
-  save("cj2-stats", stats);
-  renderStats();
-  if (nearEl) {
-    const f = document.createElement("div");
-    f.className = "xpfloat"; f.textContent = "+" + n + "⚡";
-    f.style.top = (nearEl.offsetTop - 4) + "px";
-    $("card").appendChild(f);
-    setTimeout(() => f.remove(), 1100);
-  }
-  if (Math.floor(stats.xp / XP_PER_LEVEL) > before) {
-    praise("🎉 Niveau " + (Math.floor(stats.xp / XP_PER_LEVEL) + 1) + " !");
-    confetti(80);
-  }
-}
-
-function praise(text){
-  const el = document.createElement("div");
-  el.className = "praise"; el.textContent = text;
-  $("card").appendChild(el);
-  setTimeout(() => el.remove(), 1700);
-}
-
-const CONF_COLORS = ["#ff6b6b","#ffd93d","#6bcb77","#4d96ff","#fd79a8","#a29bfe","#ff9f43"];
-function confetti(n){
-  const box = $("confetti");
-  for (let i = 0; i < n; i++) {
-    const s = document.createElement("span");
-    s.style.left = Math.random() * 100 + "vw";
-    s.style.background = CONF_COLORS[Math.floor(Math.random() * CONF_COLORS.length)];
-    s.style.animationDuration = (1.6 + Math.random() * 1.6) + "s";
-    s.style.animationDelay = (Math.random() * 0.4) + "s";
-    s.style.transform = "rotate(" + Math.random() * 360 + "deg)";
-    box.appendChild(s);
-    setTimeout(() => s.remove(), 3800);
-  }
-}
-
-/* ---------- Настройки ---------- */
-function renderSettings(){
-  const box = $("tense-chips");
-  box.innerHTML = "";
-  Object.entries(TENSES).forEach(([id, t]) => {
-    const label = document.createElement("label");
-    label.className = "chip";
-    const cb = document.createElement("input");
-    cb.type = "checkbox"; cb.value = id;
-    cb.checked = settings.tenses.includes(id);
-    const span = document.createElement("span");
-    span.textContent = t.label;
-    label.append(cb, span);
-    box.appendChild(label);
-  });
-  const set = (name, val) => { const el = document.querySelector(`input[name="${name}"][value="${val}"]`); if (el) el.checked = true; };
-  set("range", settings.range); set("accents", settings.accents); set("lang", settings.lang);
-  $("opt-phrases").checked = !!settings.phrases;
-}
-
-function readSettings(){
-  const tenses = [...document.querySelectorAll("#tense-chips input:checked")].map(cb => cb.value);
-  settings.tenses = tenses.length ? tenses : DEFAULT_TENSES;
-  settings.range = parseInt(document.querySelector('input[name="range"]:checked')?.value || "100", 10);
-  settings.accents = document.querySelector('input[name="accents"]:checked')?.value || "strict";
-  settings.lang = document.querySelector('input[name="lang"]:checked')?.value || "ru";
-  settings.phrases = $("opt-phrases").checked;
-  save("cj2-settings", settings);
-}
-
-/* ---------- Панель акцентов ---------- */
-function renderAccentBar(){
-  const bar = $("accent-bar");
-  ACCENTS.forEach(ch => {
-    const b = document.createElement("button");
-    b.type = "button"; b.textContent = ch;
-    b.addEventListener("mousedown", e => e.preventDefault());
-    b.addEventListener("touchstart", e => { e.preventDefault(); insertChar(ch); }, { passive: false });
-    b.addEventListener("click", () => insertChar(ch));
-    bar.appendChild(b);
-  });
-}
-function insertChar(ch){
-  if (!activeInput || activeInput.readOnly) return;
-  const s = activeInput.selectionStart ?? activeInput.value.length;
-  const e = activeInput.selectionEnd ?? s;
-  activeInput.value = activeInput.value.slice(0, s) + ch + activeInput.value.slice(e);
-  activeInput.focus();
-  activeInput.setSelectionRange(s + 1, s + 1);
-}
-
-/* ---------- Экраны, статы ---------- */
-function showScreen(name){
-  $("screen-settings").hidden = name !== "settings";
-  $("screen-train").hidden = name !== "train";
-  $("accent-bar").style.display = name === "train" ? "flex" : "none";
-}
-function renderStats(){
-  $("stat-streak").textContent = stats.streak;
-  $("stat-xp").textContent = stats.xp;
-  $("stat-lvl").textContent = "Lv" + (Math.floor(stats.xp / XP_PER_LEVEL) + 1);
-}
-
-/* ---------- Инициализация ---------- */
-async function init(){
-  renderStats();
-  renderAccentBar();
-  renderSettings();
-  showScreen("settings");
-
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
-  if (isIOS && !standalone) $("ios-hint").hidden = false;
-
-  const res = await fetch("verbs.json");
-  DB = (await res.json()).verbs;
-
-  $("btn-start").addEventListener("click", () => { readSettings(); showScreen("train"); newCard(); });
-  $("btn-settings").addEventListener("click", () => { renderSettings(); showScreen("settings"); });
-  $("btn-next").addEventListener("click", newCard);
-  $("btn-skip").addEventListener("click", newCard);
-  $("phrase-input").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); checkPhrase(); } });
-  $("phrase-input").addEventListener("focus", e => { activeInput = e.target; });
-  $("phrase-reveal").addEventListener("click", revealPhrase);
-
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
-}
-init();
