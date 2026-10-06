@@ -52,7 +52,7 @@ let activeInput = null;
 let cardCount = 0;
 
 function load(k, def){ try { return Object.assign({}, def, JSON.parse(localStorage.getItem(k)) || {}); } catch(e){ return def; } }
-function save(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
+function save(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) { /* Training also works without persistent storage. */ } }
 const $ = id => document.getElementById(id);
 
 const I18N = {
@@ -71,6 +71,8 @@ const I18N = {
     streak: "Серия карточек без ошибок", xp: "Опыт и уровень", settings: "Настройки",
     corrRetype: "правильно: <b>{a}</b> — перепечатай",
     corrAlmost: "почти! проверь акценты: <b>{a}</b>",
+    retryAnswer: "Попробуй ещё раз — осталась одна попытка.",
+    loading: "Загрузка глаголов…", loadError: "Не удалось загрузить глаголы. Проверь соединение и повтори загрузку.",
     noVerbs: "Для выбранных времён нет подходящих глаголов — измени настройки.",
     vVerbs: "глагол", vTenses: "времён",
   },
@@ -86,6 +88,8 @@ const I18N = {
     streak: "Streak of flawless cards", xp: "XP and level", settings: "Settings",
     corrRetype: "correct: <b>{a}</b> — retype it",
     corrAlmost: "almost! check the accents: <b>{a}</b>",
+    retryAnswer: "Try again — one attempt left.",
+    loading: "Loading verbs…", loadError: "Could not load verbs. Check your connection and retry.",
     noVerbs: "No verbs match the selected tenses — change the settings.",
     vVerbs: "verbs", vTenses: "tenses",
   },
@@ -148,25 +152,22 @@ function pronounLabel(tenseId, i, firstWord){
 }
 
 function newCard(){
-  const pool = DB.slice(0, settings.range);
-  let verb, av;
-  for (let tries = 0; tries < 60; tries++) {
-    verb = pool[Math.floor(Math.random() * pool.length)];
-    av = availableTenses(verb);
-    if (av.length) break;
-  }
-  if (!av || !av.length) { alert(L("noVerbs")); showScreen("settings"); return; }
+  const pool = DB.slice(0, settings.range).filter(v => availableTenses(v).length);
+  if (!pool.length) { alert(L("noVerbs")); showScreen("settings"); return; }
+  const verb = pool[Math.floor(Math.random() * pool.length)];
+  const av = availableTenses(verb);
   const tenseId = av[Math.floor(Math.random() * av.length)];
   const answers = buildAnswers(verb, tenseId);
   cardCount++;
   card = { verb, tenseId, answers,
            solved: answers.map(() => false),
            err: answers.map(() => 0),
-           hadError: false, phraseDone: false };
+           hadError: false, phraseDone: false, phraseErr: 0, finished: false };
   renderCard();
 }
 
 function renderCard(){
+  activeInput = null;
   const v = card.verb;
   $("card-ru").textContent = settings.lang === "en" ? v.en : v.ru;
   
@@ -182,6 +183,8 @@ function renderCard(){
   $("phrase-block").hidden = true;
   $("phrase-input").value = ""; $("phrase-input").className = ""; $("phrase-input").readOnly = false;
   $("phrase-corr").textContent = ""; $("phrase-mark").textContent = "";
+  $("phrase-check").hidden = false;
+  $("phrase-reveal").disabled = false;
   $("progress-text").textContent = "Карточка " + cardCount;
 
   const rows = $("rows");
@@ -205,6 +208,7 @@ function renderCard(){
     btnCheck.type = "button"; 
     btnCheck.textContent = "✓";
     btnCheck.title = "Проверить";
+    btnCheck.setAttribute("aria-label", "Проверить: " + pron.textContent);
     btnCheck.dataset.i = i;
     btnCheck.addEventListener("click", () => check(i));
     
@@ -218,6 +222,7 @@ function renderCard(){
     const mark = document.createElement("div");
     mark.className = "mark"; 
     mark.id = "mark-" + i;
+    mark.setAttribute("aria-live", "polite");
     
     row.append(pron, input, btnCheck, btnReveal, mark);
     rows.appendChild(row);
@@ -225,6 +230,7 @@ function renderCard(){
     const corr = document.createElement("div");
     corr.className = "correction"; 
     corr.id = "corr-" + i;
+    corr.setAttribute("aria-live", "polite");
     rows.appendChild(corr);
   });
   const first = rows.querySelector("input");
@@ -232,10 +238,12 @@ function renderCard(){
 }
 
 function check(i){
+  if (!card) return;
   if (card.solved[i]) { focusNext(i); return; }
   const input = document.querySelector(`#rows input[data-i="${i}"]`);
   const ans = card.answers[i];
   const val = norm(input.value);
+  if (!val) { input.focus(); return; }
   const mark = $("mark-" + i), corr = $("corr-" + i);
 
   let ok = ans.accepted.includes(val);
@@ -260,6 +268,7 @@ function check(i){
     
     const btn = document.querySelector(`#rows button.check[data-i="${i}"]`);
     if (btn) btn.classList.add("hidden");
+    input.parentElement.querySelector(".reveal").disabled = true;
     
     addXP(card.err[i] ? 3 : 10, input);
     if (card.solved.every(Boolean)) finishForms();
@@ -272,8 +281,7 @@ function check(i){
     mark.textContent = "❌";
     
     if (card.err[i] === 1) {
-      // Первая ошибка: просто ошибка, ничего не пишем
-      corr.textContent = "";
+      corr.textContent = L("retryAnswer");
       input.select();
     } else if (card.err[i] >= 2) {
       // Вторая ошибка: показываем ответ, просим напечатать
@@ -296,6 +304,7 @@ function reveal(i){
   
   const btn = document.querySelector(`#rows button.check[data-i="${i}"]`);
   if (btn) btn.classList.add("hidden");
+  input.parentElement.querySelector(".reveal").disabled = true;
   
   if (card.solved.every(Boolean)) finishForms();
   else focusNext(i);
@@ -324,10 +333,12 @@ function finishForms(){
 }
 
 function checkPhrase(){
+  if (!card || !card.solved.every(Boolean) || !settings.phrases || !card.verb.phr) return;
   const input = $("phrase-input");
   if (input.readOnly) return;
   const target = card.verb.phr[0];
   const val = normPhrase(input.value);
+  if (!val) { input.focus(); return; }
   let ok = val === normPhrase(target);
   if (!ok && settings.accents === "lenient" && val && stripAccents(val) === stripAccents(normPhrase(target))) ok = true;
   input.classList.remove("ok","bad","shake");
@@ -337,20 +348,25 @@ function checkPhrase(){
     input.readOnly = true;
     $("phrase-mark").textContent = "✅";
     $("phrase-corr").textContent = "";
+    $("phrase-check").hidden = true;
+    $("phrase-reveal").disabled = true;
     addXP(25, input);
     card.phraseDone = true;
     finishCard();
   } else {
     card.hadError = true;
+    card.phraseErr++;
     void input.offsetWidth;
     input.classList.add("bad","shake");
     $("phrase-mark").textContent = "❌";
-    $("phrase-corr").innerHTML = L("corrRetype").replace("{a}", target);
+    if (card.phraseErr === 1) $("phrase-corr").textContent = L("retryAnswer");
+    else $("phrase-corr").innerHTML = L("corrRetype").replace("{a}", target);
     input.select();
   }
 }
 
 function revealPhrase(){
+  if (!card || !card.solved.every(Boolean) || !settings.phrases || !card.verb.phr) return;
   const input = $("phrase-input");
   if (input.readOnly) return;
   card.hadError = true;
@@ -359,10 +375,15 @@ function revealPhrase(){
   input.readOnly = true;
   $("phrase-mark").textContent = "👁";
   $("phrase-corr").textContent = "";
+  $("phrase-check").hidden = true;
+  $("phrase-reveal").disabled = true;
+  card.phraseDone = true;
   finishCard();
 }
 
 function finishCard(){
+  if (!card || card.finished) return;
+  card.finished = true;
   stats.done += 1;
   stats.streak = card.hadError ? 0 : stats.streak + 1;
   save("cj2-stats", stats);
@@ -479,6 +500,7 @@ function insertChar(ch){
 }
 
 function showScreen(name){
+  activeInput = null;
   $("screen-settings").hidden = name !== "settings";
   $("screen-train").hidden = name !== "train";
   $("accent-bar").style.display = name === "train" ? "flex" : "none";
@@ -514,6 +536,25 @@ function setupServiceWorker(){
   });
 }
 
+async function loadDB(){
+  $("btn-start").disabled = true;
+  $("btn-retry").hidden = true;
+  $("load-status").textContent = L("loading");
+  try {
+    const res = await fetch("verbs.json");
+    if (!res.ok) throw new Error("Database HTTP " + res.status);
+    const data = await res.json();
+    if (!Array.isArray(data.verbs) || !data.verbs.length) throw new Error("Empty database");
+    DB = data.verbs;
+    $("load-status").textContent = "";
+    $("btn-start").disabled = false;
+  } catch(e) {
+    DB = [];
+    $("load-status").textContent = L("loadError");
+    $("btn-retry").hidden = false;
+  }
+}
+
 async function init(){
   renderStats();
   renderAccentBar();
@@ -521,21 +562,21 @@ async function init(){
   applyI18n();
   showScreen("settings");
 
-  const res = await fetch("verbs.json");
-  DB = (await res.json()).verbs;
-
-  $("btn-start").addEventListener("click", () => { readSettings(); cardCount = 0; showScreen("train"); newCard(); });
+  $("btn-retry").addEventListener("click", loadDB);
+  $("btn-start").addEventListener("click", () => { if (!DB.length) return; readSettings(); cardCount = 0; showScreen("train"); newCard(); });
   document.querySelectorAll('input[name="lang"]').forEach(r =>
     r.addEventListener("change", () => { 
       settings.lang = r.value; 
       save("cj2-settings", settings); 
       applyI18n(); 
-      if (card) renderCard(); 
     }));
   $("btn-settings").addEventListener("click", () => { renderSettings(); showScreen("settings"); });
   $("btn-back").addEventListener("click", () => { cardCount = 0; showScreen("settings"); });
-  $("btn-next").addEventListener("click", newCard);
-  $("btn-skip").addEventListener("click", newCard);
+  $("btn-next").addEventListener("click", () => { if (card?.finished) newCard(); });
+  $("btn-skip").addEventListener("click", () => {
+    if (card && !card.finished) { stats.streak = 0; save("cj2-stats", stats); renderStats(); }
+    newCard();
+  });
   
   const btnInstall = $("btn-install");
   const installContent = $("install-content");
@@ -548,7 +589,9 @@ async function init(){
   $("phrase-input").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); checkPhrase(); } });
   $("phrase-input").addEventListener("focus", e => { activeInput = e.target; });
   $("phrase-reveal").addEventListener("click", revealPhrase);
+  $("phrase-check").addEventListener("click", checkPhrase);
 
   setupServiceWorker();
+  await loadDB();
 }
 init();

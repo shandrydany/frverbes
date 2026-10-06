@@ -1,5 +1,5 @@
-/* Conjugueur service worker v2.4 */
-const CACHE = "conjugueur-v2.4";
+/* Conjugueur service worker — trainer fixes */
+const CACHE = "conjugueur-v2.5";
 const ASSETS = [
   "./",
   "./index.html",
