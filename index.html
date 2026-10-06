@@ -57,7 +57,9 @@
     <label class="chip"><input type="checkbox" id="opt-phrases" checked><span>Перевести предложение (+25 ⚡)</span></label>
   </div>
 
-  <button id="btn-start" class="primary">Тренировать глаголы! 🤗</button>
+  <button id="btn-start" class="primary" disabled>Тренировать глаголы! 🤗</button>
+  <p id="load-status" role="status" aria-live="polite">Загрузка глаголов…</p>
+  <button id="btn-retry" class="ghost" hidden>Повторить загрузку</button>
 
   <div class="install-wrapper">
     <button id="btn-install" class="install-toggle">📱 Как установить приложение?</button>
@@ -91,10 +93,11 @@
       <div class="phrase-src" id="phrase-src"></div>
       <div class="row">
         <input id="phrase-input" type="text" autocapitalize="none" autocomplete="off" spellcheck="false">
+        <button class="check" id="phrase-check" type="button" aria-label="Проверить предложение">✓</button>
         <button class="reveal" id="phrase-reveal" title="Показать ответ">💡</button>
         <div class="mark" id="phrase-mark"></div>
       </div>
-      <div class="correction" id="phrase-corr"></div>
+      <div class="correction" id="phrase-corr" aria-live="polite"></div>
     </div>
 
     <div class="btnrow">
